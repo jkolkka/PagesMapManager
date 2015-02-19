@@ -1,0 +1,114 @@
+<?php
+
+/* 
+ *	PagesMapManager
+ *
+ *  This module is for managing pages mindmap style. It allows easily create
+ *  website hiearchy.
+ *
+ *  Module uses Chaptykov (https://github.com/Chaptykov/mindmap) javascipt mindmap
+ *	plugin for jQuery licenced under MIT.
+ *	The MIT License (MIT)
+ *	Copyright (c) 2013 Chaptykov
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy of
+ *	this software and associated documentation files (the "Software"), to deal in
+ *	the Software without restriction, including without limitation the rights to
+ *	use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+ *	the Software, and to permit persons to whom the Software is furnished to do so,
+ *	subject to the following conditions:
+ *	The above copyright notice and this permission notice shall be included in all
+ *	copies or substantial portions of the Software.
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ *	FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ *	COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ *	IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ *	CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *	
+ */
+
+ 
+/*
+ * Class PagesMapManager
+ *
+ */
+class PagesMapManager extends Process{
+    
+    public function __construct() {
+       
+    }
+    public static function getModuleInfo() {
+        return array(
+            'title' => __('Pages Map Manger'), 
+            'version' => '0.2', 
+            'summary' => 'Allows you to manage pages in mindmap.',
+			'author' => "Joonas \"Entil'zha\" Kolkka",
+            'href' => 'fill git hub here',
+            'singular' => true, 
+            'autoload' => false, 
+            );
+    }
+    
+    public function ___execute() {
+		$content = '<h2>' . __('Pages management with mindmap') . '</h2>';
+		$content .= '<p>' . __('You can easily manage your pages with this mindmap tool.') . '</p>';
+		$content .= '<ul>';
+		$content .= '<li>' . __('Create page to same level') . ' - Enter</li>';
+		$content .= '<li>' . __('Create suppage under selected') . ' - Tab</li>';
+		$content .= '<li>' . __('Delete selected page') . ' - Delete</li>';
+		$content .= '</ul>';
+		$content .= '<div class="mindmap">';
+		$content .= '<div class="node node_root">';
+		$content .= '<div class="node__text">' . wire('pages')->get(1)->title . '</div>';
+		$content .= '<input type="text" class="node__input">';
+		$content .= '</div>';
+		
+		$content .= $this->getPages(wire('pages')->get(1));
+		$content .= '<script>';
+		$content .= '$(function(){';
+		$content .= '$(\'.mindmap\').mindmap();';
+		$content .= '});';
+		$content .= '</script>';
+		return $content;
+    }
+	
+	private function getPages($page, $level = 0) {
+		$pages = wire('pages')->find('parent=' . $page);
+		$out = '';
+		foreach($pages as $page) {
+			$out .= '<li class="children__item">';
+			$out .= '<div class="node">';
+			$out .= '<div class="node__text">' . $page->title . '</div>';
+			$out .= '<input type="text" class="node__input">';
+			$out .= '</div>';
+			if($page->hasChildren()) {
+				$out .= $this->getPages($page, $level+1);
+			}
+			$out .= '</li>';
+			
+		}
+		if ($out && !$level) $out = ' <ol class="children children_rightbranch">' . $out . '</ol>';
+		else $out = ' <ol class="children">' . $out . '</ol>';
+		return $out;
+	}
+    
+	public function install() {
+		/* This is purely stolen from soma's ModulesManager-module <3 */
+		// page already found for some reason
+		$ap = $this->pages->find('name='.__CLASS__)->first();
+		if($ap->id) {
+            if(!$ap->process) {
+                    $ap->process = $this;
+                    $ap->save();
+            }
+            return;
+        }
+		$p = new Page();
+		$p->template = $this->templates->get('admin');
+		$p->title = __CLASS__;
+		$p->name = __CLASS__;
+		$p->parent = $this->pages->get(22);
+		$p->process = $this;
+		$p->save();
+	}
+}
