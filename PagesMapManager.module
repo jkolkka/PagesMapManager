@@ -61,7 +61,7 @@ class PagesMapManager extends Process{
             );
     }
     
-    public function ___execute() {
+    public function execute() {
 		/* Tell user what's this about and how to use */
 		$content = '<h2>' . __('Pages management with mindmap') . '</h2>';
 		$content .= '<p>' . __('You can easily manage your pages with this mindmap tool.') . '</p>';
@@ -91,6 +91,34 @@ class PagesMapManager extends Process{
 		return $content;
     }
 	
+	public function executePages() {
+		/* If not ajax redirect to mainpage */
+		if(wire('config')->ajax) {
+
+			/* Check if pageID and title is set, else return error */
+			if(wire('input')->post->pageID && wire('input')->post->title) {
+				$p = new Page();
+				$p->template = $this->templates->get('basic-page');
+				$p->title = wire('input')->post->title;
+				$p->name = wire('sanitizer')->name(wire('input')->post->title);
+				/* TODO: Check if there's a better sanitizer than text */
+				$p->parent = $this->pages->get(wire('sanitizer')->text(wire('input')->post->parentid));
+				//$p->save();
+				
+				$out = '<li class="ui-state-highlight NoticeMessage"><div class="container"><p><i class="fa fa-check-square"></i> ' . __('Page created') . '</p></div></li>';
+
+			}
+			else {
+				//$out = '<div class="alert alert-error" role="alert">' . __('Error: Page must have Title!') . '</div>';
+			}
+		}
+		else {
+			$this->session->redirect('./');
+		}
+		/* Everything done, let's kill this */
+		return $out;
+	}
+	
 	/**
 	 *	getPages
 	 *
@@ -110,8 +138,8 @@ class PagesMapManager extends Process{
 			/* Create required markup */
 			$out .= '<li class="children__item">';
 			$out .= '<div class="node">';
-			/* Echo title for page */
-			$out .= '<div class="node__text">' . $page->title . '</div>';
+			/* Echo page's id and title */
+			$out .= '<div id="' . $page->id . '" data-parentid="' . $page->parent->id . '" class="node__text">' . $page->title . '</div>';
 			$out .= '<input type="text" class="node__input">';
 			$out .= '</div>';
 			/* Check if page has childrens */

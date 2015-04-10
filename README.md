@@ -7,3 +7,5 @@ ease of management for sites that have large static content.
 
 Download module to your site/modules folder. After that install it under ProcessWire
 admin.
+
+# Thanx for all 

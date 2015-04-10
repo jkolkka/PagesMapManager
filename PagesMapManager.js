@@ -70,7 +70,6 @@
                         else {
                             methods.blur();
                             methods.setActive(node);
-
                             return false;
                         }
                         break;
@@ -498,9 +497,33 @@
         }
 
     };
+    
+    /* This is added for PagesMapManager */
+    
+    /* Let's do magic when user press enter */
+    $(document).on('keydown', '.node_editable', function(event){
+        $('body').prepend('<ul id="notices" class="ui-widget"></ul>');
+        /* If keypress was Enter, else do_nothing */
+        if (event.which == 13) {
+            /* If node has id attribute then it's old page and we can edit it
+             * else we are creating a new page */
+            var idAttr = $(this).children('.node__text').attr('id');
+            if (typeof idAttr !== typeof undefined && idAttr !== false) {
+                nodeText = $(this).children('.node__text').html();
+                nodeParentID = $(this).children('.node__text').attr('data-parentid');
+                nodeID = $(this).children('.node__text').attr('id');
+            }
+            else {
+                nodeID = 0;
+                nodeParentID = $(this).children('.node__text').attr('data-parentid');
+                nodeText = $(this).children('.node__text').html();
+            }
+            $.post('./pages', { pageID: nodeID, title: nodeText , parentID: nodeParentID}, function( data ) {
+                $('#notices').append(data).fadeOut(2000);
+            });
+            //alert(nodeID + ' - ' + nodeText);
+        }
+    });
 
 }(jQuery));
 
-$('.node__input').change(function(){
-    alert('testi');
-})
